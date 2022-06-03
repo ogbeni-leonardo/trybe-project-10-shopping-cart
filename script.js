@@ -43,6 +43,17 @@ const getInformationOfCartItem = (string) => {
 
 // Criada por mim
 
+const allItemsFromCart = () => JSON.parse(getSavedCartItems());
+
+const totalPrice = () => {
+  let value = 0;
+  allItemsFromCart().forEach(({ salePrice }) => {
+    value += parseFloat(salePrice);
+  });
+  value = Math.round(value * 100) / 100;
+  document.querySelector('.total-price').innerText = value;
+};
+
 const localStorageUpdate = () => {
   const itemsOnCart = document.querySelectorAll('.cart__item');
   const itemsValue = [];
@@ -55,6 +66,7 @@ const localStorageUpdate = () => {
   }
 
   saveCartItems(JSON.stringify(itemsValue));
+  totalPrice();
 };
 
 const getSkuFromProductItem = (item) =>
@@ -108,10 +120,12 @@ const addItemsToCart = async () => {
 window.onload = async () => {
   await addSectionItems();
   await addItemsToCart();
-  const savedItemsOnCart = JSON.parse(getSavedCartItems());
-  savedItemsOnCart.forEach((item) => {
+
+  allItemsFromCart().forEach((item) => {
     document
       .querySelector('.cart__items')
       .appendChild(createCartItemElement(item));
   });
+
+  totalPrice();
 };
