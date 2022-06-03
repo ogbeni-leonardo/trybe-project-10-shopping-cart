@@ -1,3 +1,6 @@
+const qs = (selector) => document.querySelector(selector);
+const qsa = (selector) => document.querySelectorAll(selector);
+
 const createProductImageElement = (imageSource) => {
   const img = document.createElement('img');
   img.className = 'item__image';
@@ -26,9 +29,7 @@ const createProductItemElement = ({ sku, name, image }) => {
   return section;
 };
 
-// Criada por mim
-
-const getInformationOfCartItem = (string) => {
+const getCartItemData = (string) => {
   const formattedString = string
     .replace('SKU:', '')
     .replace('NAME:', '')
@@ -38,34 +39,33 @@ const getInformationOfCartItem = (string) => {
   const [sku, name, salePrice] = formattedString
     .split('|')
     .map((info) => info.trim());
+
   return { sku, name, salePrice };
 };
 
-// Criada por mim
-
-const allItemsFromCart = () => JSON.parse(getSavedCartItems());
+const getAllItemsFromCart = () => JSON.parse(getSavedCartItems()) || [];
 
 const totalPrice = () => {
   let value = 0;
-  allItemsFromCart().forEach(({ salePrice }) => {
+
+  getAllItemsFromCart().forEach(({ salePrice }) => {
     value += parseFloat(salePrice);
   });
+
   value = Math.round(value * 100) / 100;
-  document.querySelector('.total-price').innerText = value;
+  qs('.total-price').innerText = value;
 };
 
 const localStorageUpdate = () => {
-  const itemsOnCart = document.querySelectorAll('.cart__item');
-  const itemsValue = [];
+  const itemsOnCart = qsa('.cart__item');
+  const itemsData = [];
 
   for (let index = 0; index < itemsOnCart.length; index += 1) {
-    const formattedString = getInformationOfCartItem(
-      itemsOnCart[index].innerText,
-    );
-    itemsValue.push(formattedString);
+    const formattedString = getCartItemData(itemsOnCart[index].innerText);
+    itemsData.push(formattedString);
   }
 
-  saveCartItems(JSON.stringify(itemsValue));
+  saveCartItems(JSON.stringify(itemsData));
   totalPrice();
 };
 
@@ -85,47 +85,66 @@ const createCartItemElement = ({ sku, name, salePrice }) => {
   return li;
 };
 
-// Criadas por mim
+const addItemsToSection = async () => {
+  const itemsSection = qs('.items');
 
-const addSectionItems = async () => {
-  const sectionItems = document.querySelector('.items');
-
-  const allProductsFromQuery = await fetchProducts('computador');
-  allProductsFromQuery.results.forEach((item) => {
+  const allSearchedProductsFromAPI = await fetchProducts('computador');
+  allSearchedProductsFromAPI.results.forEach((item) => {
     const { id: sku, title: name, thumbnail: image } = item;
 
     const itemElement = createProductItemElement({ sku, name, image });
-    sectionItems.appendChild(itemElement);
+    itemsSection.appendChild(itemElement);
   });
 };
 
+const CART_ITEMS = '.cart__items';
+
 const addItemsToCart = async () => {
-  const addButtons = document.querySelectorAll('.item__add');
+  const addButtons = qsa('.item__add');
+
   addButtons.forEach((button) => {
     button.addEventListener('click', async () => {
       const myParent = button.parentElement;
       const queryId = getSkuFromProductItem(myParent);
 
-      const getItem = await fetchItem(queryId);
-      const { id: sku, title: name, price: salePrice } = getItem;
+      const getItemFromAPI = await fetchItem(queryId);
+
+      const { id: sku, title: name, price: salePrice } = getItemFromAPI;
 
       const itemToAdd = createCartItemElement({ sku, name, salePrice });
-      document.querySelector('.cart__items').appendChild(itemToAdd);
+      qs(CART_ITEMS).appendChild(itemToAdd);
 
       localStorageUpdate();
     });
   });
 };
 
+const clearCart = () => {
+  qs(CART_ITEMS).innerText = '';
+  localStorageUpdate();
+};
+
+const loading = (load) => {
+  if (load) {
+    const element = createCustomElement('p', 'loading', 'carregando...');
+    qs('.items').appendChild(element);
+  } else {
+    qs('.loading').remove();
+  }
+};
+
 window.onload = async () => {
-  await addSectionItems();
+  loading(true);
+  await addItemsToSection();
+  loading(false);
+  
   await addItemsToCart();
 
-  allItemsFromCart().forEach((item) => {
-    document
-      .querySelector('.cart__items')
-      .appendChild(createCartItemElement(item));
+  getAllItemsFromCart().forEach((item) => {
+    qs(CART_ITEMS).appendChild(createCartItemElement(item));
   });
 
   totalPrice();
+
+  qs('.empty-cart').onclick = clearCart;
 };
