@@ -55,10 +55,7 @@ const localStorageUpdate = () => {
   totalPrice();
 };
 
-const cartItemClickListener = (event) => {
-  event.target.remove();
-  localStorageUpdate();
-};
+const cartItemClickListener = (event) => { event.target.remove(); localStorageUpdate(); };
 
 const createCartItemElement = ({ sku, name, salePrice }) => {
   const li = document.createElement('li');
@@ -70,12 +67,9 @@ const createCartItemElement = ({ sku, name, salePrice }) => {
 
 const CART_ITEMS = '.cart__items';
 
-const clearCart = () => {
-  qs(CART_ITEMS).innerText = '';
-  localStorageUpdate();
-};
+const clearCart = () => { qs(CART_ITEMS).innerText = ''; localStorageUpdate(); };
 
-const createProductItemElement = ({ sku, name, image }) => {
+const createProductItemElement = ({ sku, name, image, salePrice }) => {
   const section = document.createElement('section');
   section.className = 'item';
 
@@ -85,42 +79,29 @@ const createProductItemElement = ({ sku, name, image }) => {
 
   const addButton = createCustomElement('button', 'item__add', 'Adicionar ao carrinho!');
   addButton.onclick = async () => {
-    const getItemFromAPI = await fetchItem(sku);
-    const { price: salePrice } = getItemFromAPI;
-    const itemToAdd = createCartItemElement({ sku, name, salePrice });
-    qs(CART_ITEMS).appendChild(itemToAdd);
+    qs(CART_ITEMS).appendChild(createCartItemElement({ sku, name, salePrice }));
     localStorageUpdate();
   };
   section.appendChild(addButton);
-  
+
   return section;
 };
 
 const addItemsToSection = async () => {
   const itemsSection = qs('.items');
-
   const allSearchedProductsFromAPI = await fetchProducts('computador');
-  allSearchedProductsFromAPI.results.forEach((item) => {
-    const { id: sku, title: name, thumbnail: image } = item;
 
-    const itemElement = createProductItemElement({ sku, name, image });
+  allSearchedProductsFromAPI.results.forEach((item) => {
+    const { id: sku, title: name, thumbnail: image, price: salePrice } = item;
+    const itemElement = createProductItemElement({ sku, name, image, salePrice });
     itemsSection.appendChild(itemElement);
   });
 };
 
-const loading = (load) => {
-  if (load) {
-    const element = createCustomElement('p', 'loading', 'carregando...');
-    qs('.items').appendChild(element);
-  } else {
-    qs('.loading').remove();
-  }
-};
-
 window.onload = async () => {
-  loading(true);
+  qs('.items').appendChild(createCustomElement('p', 'loading', 'carregando...'));
   await addItemsToSection();
-  loading(false);
+  qs('.loading').remove();
 
   getAllItemsFromCart().forEach((item) => {
     qs(CART_ITEMS).appendChild(createCartItemElement(item));
