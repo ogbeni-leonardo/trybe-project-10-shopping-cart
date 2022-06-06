@@ -15,18 +15,17 @@ const createCustomElement = (element, className, innerText) => {
   return e;
 };
 
-const createProductItemElement = ({ sku, name, image }) => {
-  const section = document.createElement('section');
-  section.className = 'item';
+const getAllItemsFromCart = () => JSON.parse(getSavedCartItems()) || [];
 
-  section.appendChild(createCustomElement('span', 'item__sku', sku));
-  section.appendChild(createCustomElement('span', 'item__title', name));
-  section.appendChild(createProductImageElement(image));
-  section.appendChild(
-    createCustomElement('button', 'item__add', 'Adicionar ao carrinho!'),
-  );
+const totalPrice = () => {
+  let value = 0;
 
-  return section;
+  getAllItemsFromCart().forEach(({ salePrice }) => {
+    value += parseFloat(salePrice);
+  });
+
+  value = Math.round(value * 100) / 100;
+  qs('.total-price').innerText = value;
 };
 
 const getCartItemData = (string) => {
@@ -43,19 +42,6 @@ const getCartItemData = (string) => {
   return { sku, name, salePrice };
 };
 
-const getAllItemsFromCart = () => JSON.parse(getSavedCartItems()) || [];
-
-const totalPrice = () => {
-  let value = 0;
-
-  getAllItemsFromCart().forEach(({ salePrice }) => {
-    value += parseFloat(salePrice);
-  });
-
-  value = Math.round(value * 100) / 100;
-  qs('.total-price').innerText = value;
-};
-
 const localStorageUpdate = () => {
   const itemsOnCart = qsa('.cart__item');
   const itemsData = [];
@@ -68,9 +54,6 @@ const localStorageUpdate = () => {
   saveCartItems(JSON.stringify(itemsData));
   totalPrice();
 };
-
-const getSkuFromProductItem = (item) =>
-  item.querySelector('span.item__sku').innerText;
 
 const cartItemClickListener = (event) => {
   event.target.remove();
@@ -85,6 +68,34 @@ const createCartItemElement = ({ sku, name, salePrice }) => {
   return li;
 };
 
+const CART_ITEMS = '.cart__items';
+
+const clearCart = () => {
+  qs(CART_ITEMS).innerText = '';
+  localStorageUpdate();
+};
+
+const createProductItemElement = ({ sku, name, image }) => {
+  const section = document.createElement('section');
+  section.className = 'item';
+
+  section.appendChild(createCustomElement('span', 'item__sku', sku));
+  section.appendChild(createCustomElement('span', 'item__title', name));
+  section.appendChild(createProductImageElement(image));
+
+  const addButton = createCustomElement('button', 'item__add', 'Adicionar ao carrinho!');
+  addButton.onclick = async () => {
+    const getItemFromAPI = await fetchItem(sku);
+    const { price: salePrice } = getItemFromAPI;
+    const itemToAdd = createCartItemElement({ sku, name, salePrice });
+    qs(CART_ITEMS).appendChild(itemToAdd);
+    localStorageUpdate();
+  };
+  section.appendChild(addButton);
+  
+  return section;
+};
+
 const addItemsToSection = async () => {
   const itemsSection = qs('.items');
 
@@ -95,33 +106,6 @@ const addItemsToSection = async () => {
     const itemElement = createProductItemElement({ sku, name, image });
     itemsSection.appendChild(itemElement);
   });
-};
-
-const CART_ITEMS = '.cart__items';
-
-const addItemsToCart = async () => {
-  const addButtons = qsa('.item__add');
-
-  addButtons.forEach((button) => {
-    button.addEventListener('click', async () => {
-      const myParent = button.parentElement;
-      const queryId = getSkuFromProductItem(myParent);
-
-      const getItemFromAPI = await fetchItem(queryId);
-
-      const { id: sku, title: name, price: salePrice } = getItemFromAPI;
-
-      const itemToAdd = createCartItemElement({ sku, name, salePrice });
-      qs(CART_ITEMS).appendChild(itemToAdd);
-
-      localStorageUpdate();
-    });
-  });
-};
-
-const clearCart = () => {
-  qs(CART_ITEMS).innerText = '';
-  localStorageUpdate();
 };
 
 const loading = (load) => {
@@ -137,8 +121,6 @@ window.onload = async () => {
   loading(true);
   await addItemsToSection();
   loading(false);
-  
-  await addItemsToCart();
 
   getAllItemsFromCart().forEach((item) => {
     qs(CART_ITEMS).appendChild(createCartItemElement(item));
