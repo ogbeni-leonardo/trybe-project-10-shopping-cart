@@ -1,13 +1,16 @@
-# :construction: README customizado em construção ! :construction:
-<!-- Olá, Tryber!
-Esse é apenas um arquivo inicial para o README do seu projeto no qual você pode customizar e reutilizar todas as vezes que for executar o trybe-publisher.
+# Shopping Cart
 
-Para deixá-lo com a sua cara, basta alterar o seguinte arquivo da sua máquina: ~/.student-repo-publisher/custom/_NEW_README.md
+Este projeto consiste em uma página web com um carrinho de compras dinâmico, iniciando os conhecimentos em requisições a API's.
 
-É essencial que você preencha esse documento por conta própria, ok?
-Não deixe de usar nossas dicas de escrita de README de projetos, e deixe sua criatividade brilhar!
-:warning: IMPORTANTE: você precisa deixar nítido:
-- quais arquivos/pastas foram desenvolvidos por você; 
-- quais arquivos/pastas foram desenvolvidos por outra pessoa estudante;
-- quais arquivos/pastas foram desenvolvidos pela Trybe.
--->
+## Recursos
+
+- Uso da `fetch API` para requisições a API do [Mercado Livre](https://www.mercadolivre.com.br/);
+- Programação orientada a testes.
+
+## Requisito
+
+Para fazer uso desta aplicação é necessário ter um navegador web atualizado.
+
+## Uso
+
+Para usar esta aplicação basta clonar o repositório e acessar o arquivo `index.html`.
